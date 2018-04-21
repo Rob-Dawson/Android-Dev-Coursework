@@ -45,6 +45,7 @@ public class SelectPuzzleActivity extends AppCompatActivity
 
         protected String doInBackground(String... args)
         {
+
             downloadingInProgress = true;
             try
             {
@@ -87,7 +88,7 @@ public class SelectPuzzleActivity extends AppCompatActivity
 
                 ///Downloads the layout and stores it in a new table in database.
                 ///Downloads the pictures and stores them on the device.
-                String url = "http://www.simongrey.net/08027/slidingPuzzleAcw/layouts/" + layout;
+                String url = (getString(R.string.puzzleLayout)) + layout;
                 stream = (InputStream) new URL(url).getContent();
                 reader = new BufferedReader(new InputStreamReader(stream));
                 line = "";
@@ -114,7 +115,7 @@ public class SelectPuzzleActivity extends AppCompatActivity
 
                     String completeLayout = layoutArray.getString(i);
 
-                    completeLayout = completeLayout.replaceAll("[^empty 1-9\\],]", "");
+                    completeLayout = completeLayout.replaceAll((getString(R.string.regexReplaceMisc)), "");
                     //completeLayout = completeLayout.substring(0, completeLayout.length() - 1);
                     completeLayout = completeLayout.replace("]", ",");
                     fullLayout += completeLayout;
@@ -260,7 +261,7 @@ public class SelectPuzzleActivity extends AppCompatActivity
                         try
                         {
                             Log.i("Image", "Image does not exist");
-                            String image = "http://www.simongrey.net/08027/slidingPuzzleAcw/images/" + picture + "/" + fullLayoutArray[i];
+                            String image = (getString(R.string.puzzleImageURL)) + picture + "/" + fullLayoutArray[i];
 
                             if (fullLayoutArray[i].equals("empty"))
                             {
@@ -284,27 +285,35 @@ public class SelectPuzzleActivity extends AppCompatActivity
                             e.printStackTrace();
                         }
                     }
+                    downloadingInProgress = false;
+
                 }
             } catch (Exception e)
             {
                 e.printStackTrace();
             }
-            downloadingInProgress = false;
-            return "";
+            return layout;
         }
 
-        @Override
-        protected void onPostExecute(String s)
-        {
-            Log.i("Downloading", "Complete");
-            Intent intent = new Intent(getApplicationContext(), gameActivity.class);
-            intent.putExtra("puzzleLayout1", formattedLayoutRow1);
-            intent.putExtra("puzzleLayout2", formattedLayoutRow2);
-            intent.putExtra("puzzleLayout3", formattedLayoutRow3);
-            intent.putExtra("puzzleLayout4", formattedLayoutRow4);
-            intent.putExtra("fullPuzzleLayout", fullLayoutArray);
-            intent.putExtra("puzzleImage", picture);
-            startActivity(intent);
+
+            @Override
+            protected void onPostExecute (String s)
+            {
+            try
+            {
+                Log.i("Downloading", "Complete");
+                Intent intent = new Intent(getApplicationContext(), gameActivity.class);
+                intent.putExtra((getString(R.string.puzzleLayout1)), formattedLayoutRow1);
+                intent.putExtra((getString(R.string.puzzleLayout2)), formattedLayoutRow2);
+                intent.putExtra((getString(R.string.puzzleLayout3)), formattedLayoutRow3);
+                intent.putExtra((getString(R.string.puzzleLayout4)), formattedLayoutRow4);
+                intent.putExtra((getString(R.string.fullPuzzleLayout)), fullLayoutArray);
+                intent.putExtra((getString(R.string.puzzleImage)), picture);
+                startActivity(intent);
+            }catch(Exception e)
+                {
+                    e.printStackTrace();
+                }
         }
     }
 
@@ -319,7 +328,8 @@ public class SelectPuzzleActivity extends AppCompatActivity
         SQLiteDatabase db = new PuzzleDBHelper(this).getReadableDatabase();
         String[] projection = {
                 PuzzleDBContract.PuzzleEntry._ID,
-                PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME
+                PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME,
+                PuzzleDBContract.PuzzleEntry.HIGHSCORE
         };
 
         Cursor c = db.query(
@@ -336,13 +346,15 @@ public class SelectPuzzleActivity extends AppCompatActivity
         c.moveToFirst();
 
         String name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+        String highScore = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.HIGHSCORE));
         int id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
-        puzzleList.add(new Puzzle(name, null, null, id));
+        puzzleList.add(new Puzzle(name, null, null, highScore, id));
         while (c.moveToNext())
         {
             name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+            highScore = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.HIGHSCORE));
             id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
-            puzzleList.add(new Puzzle(name, null, null, id));
+            puzzleList.add(new Puzzle(name, null, null, highScore, id));
         }
         c.close();
 
@@ -358,7 +370,7 @@ public class SelectPuzzleActivity extends AppCompatActivity
             {
 
                 position++;
-                new downloadPuzzleDefinition().execute("http://www.simongrey.net/08027/slidingPuzzleAcw/puzzles/puzzle" + position + ".json");
+                new downloadPuzzleDefinition().execute((getString(R.string.puzzleDefinitionURL)) + position + ".json");
             }
         });
     }

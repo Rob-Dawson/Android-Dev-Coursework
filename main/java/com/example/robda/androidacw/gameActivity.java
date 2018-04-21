@@ -1,6 +1,9 @@
 package com.example.robda.androidacw;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -101,13 +104,13 @@ public class gameActivity extends AppCompatActivity
     protected void getStringIntent()
     {
         Intent intent = getIntent();
-        puzzleRow1 = intent.getStringArrayExtra("puzzleLayout1");
-        puzzleRow2 = intent.getStringArrayExtra("puzzleLayout2");
-        puzzleRow3 = intent.getStringArrayExtra("puzzleLayout3");
-        puzzleRow4 = intent.getStringArrayExtra("puzzleLayout4");
+        puzzleRow1 = intent.getStringArrayExtra((getString(R.string.puzzleLayout1)));
+        puzzleRow2 = intent.getStringArrayExtra((getString(R.string.puzzleLayout2)));
+        puzzleRow3 = intent.getStringArrayExtra((getString(R.string.puzzleLayout3)));
+        puzzleRow4 = intent.getStringArrayExtra((getString(R.string.puzzleLayout4)));
 
-        fullLayout = intent.getStringArrayExtra("fullPuzzleLayout");
-        puzzlePicture = intent.getStringExtra("puzzleImage");
+        fullLayout = intent.getStringArrayExtra((getString(R.string.fullPuzzleLayout)));
+        puzzlePicture = intent.getStringExtra((getString(R.string.puzzleImage)));
     }
 
     protected void initaliseMultArray()
@@ -158,9 +161,12 @@ public class gameActivity extends AppCompatActivity
         }
 
     }
+    PuzzleDBHelper m_DBHelperRead = new PuzzleDBHelper(this);
+
 
     private void showElapsedTime()
-    {
+    {    ContentValues values = new ContentValues();
+        values.clear();
         simpleChronometer.stop();
         long elapsedMillis = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
         elapsedMillis = elapsedMillis / 1000;
@@ -168,10 +174,31 @@ public class gameActivity extends AppCompatActivity
         {
             playerScore -= elapsedMillis;
         }
+        else
+        {
+            playerScore = 0;
+        }
         winner.setVisibility(View.VISIBLE);
         TextView winText = (TextView)findViewById(R.id.winnerText);
-        winText.setText("Congratulations, you have won and scored " + playerScore + " points");
+        winText.setText(getString(R.string.win) + playerScore + getString(R.string.points));
 
+        SQLiteDatabase db = m_DBHelperRead.getWritableDatabase();
+
+
+//        String[] projection = {
+//                //PuzzleDBContract.PuzzleEntry.COLUMN_PICTURE_SET_DEFINITION,
+//                PuzzleDBContract.PuzzleEntry.HIGHSCORE
+//        };
+//        Cursor c = db.query(
+//                PuzzleDBContract.PuzzleEntry.TABLE_NAME,
+//                projection,
+//                null, null, null, null, null
+//        );
+//        c.close();
+        String highScore = Integer.toString(playerScore);
+        values.put(PuzzleDBContract.PuzzleEntry.HIGHSCORE, highScore);
+        db.insert(PuzzleDBContract.PuzzleEntry.TABLE_NAME, null, values);
+        Log.i("Insert", "Highscore " + values);
     }
 
     public void checkMove(int position)

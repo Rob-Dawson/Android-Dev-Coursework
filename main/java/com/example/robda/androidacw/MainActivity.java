@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity
                 c.close();
             } catch (Exception e)
             {
+                //Toast.makeText(MainActivity.this, getString(R.string.noNetwork), Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
             return formattedResult;
@@ -118,10 +119,8 @@ public class MainActivity extends AppCompatActivity
 
     public void onClickDownloadPuzzles(View view)
     {
-        new downloadJSON().execute("http://www.simongrey.net/08027/slidingPuzzleAcw/index.json");
-        Toast.makeText(this, "Downloaded JSON", Toast.LENGTH_SHORT).show();
-        TextView same = (TextView) findViewById(R.id.textView);
-        same.setText("Hello");
+        new downloadJSON().execute(getString(R.string.puzzleIndexURL));
+        Toast.makeText(this,(getString(R.string.downloadedPuzzles)) , Toast.LENGTH_SHORT).show();
     }
 
 
@@ -144,13 +143,17 @@ public class MainActivity extends AppCompatActivity
         );
         if (c.getCount() <= 0)
         {
-            Toast.makeText(this, "No stored puzzles. Please download puzzles", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, (getString(R.string.noPuzzlesFound)), Toast.LENGTH_SHORT).show();
         }
         else
         {
             Intent intent = new Intent(this, SelectPuzzleActivity.class);
             startActivity(intent);
         }
+    }
+    public void onClickHighscore(View view) {
+        Intent intent = new Intent(this, Highscores.class);
+        startActivity(intent);
     }
 
 }
