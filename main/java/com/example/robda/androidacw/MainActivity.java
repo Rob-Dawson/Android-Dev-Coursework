@@ -1,9 +1,12 @@
 package com.example.robda.androidacw;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -75,7 +78,6 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    int j = 0;
                     c.moveToFirst();
                     do
                     {
@@ -119,8 +121,18 @@ public class MainActivity extends AppCompatActivity
 
     public void onClickDownloadPuzzles(View view)
     {
-        new downloadJSON().execute(getString(R.string.puzzleIndexURL));
-        Toast.makeText(this,(getString(R.string.downloadedPuzzles)) , Toast.LENGTH_SHORT).show();
+        NetworkInfo info = (NetworkInfo) ((ConnectivityManager)
+                getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+        if (info == null)
+        {
+            Toast.makeText(MainActivity.this, "No Network Connection", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            new downloadJSON().execute(getString(R.string.puzzleIndexURL));
+            Toast.makeText(this, (getString(R.string.downloadedPuzzles)), Toast.LENGTH_SHORT).show();
+
+        }
     }
 
 
@@ -152,8 +164,31 @@ public class MainActivity extends AppCompatActivity
         }
     }
     public void onClickHighscore(View view) {
-        Intent intent = new Intent(this, Highscores.class);
-        startActivity(intent);
+        SQLiteDatabase dbread = m_DBHelperRead.getReadableDatabase();
+        String[] projection = {
+                PuzzleDBContract.PuzzleEntry._ID,
+                PuzzleDBContract.PuzzleEntry.HIGHSCORE
+        };
+
+        Cursor c = dbread.query(
+                PuzzleDBContract.PuzzleEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+        if (c.getCount() <= 0)
+        {
+            Toast.makeText(this, (getString(R.string.noHighscores)), Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            Intent intent = new Intent(this, Highscores.class);
+            startActivity(intent);
+        }
+
     }
 
 }

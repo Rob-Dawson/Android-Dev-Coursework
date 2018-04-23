@@ -1,10 +1,9 @@
 <resources>
-    <string name="app_name">AndroidACW</string>
+    <string name="app_name">Awesome Slidey Game</string>
     <string name="puzzleIndexURL">http://www.simongrey.net/08027/slidingPuzzleAcw/index.json</string>
     <string name="downloadedPuzzles">Downloaded Puzzles</string>
     <string name="noPuzzlesFound">No puzzles found, please download puzzles to continue</string>
     <string name="puzzleLayout">http://www.simongrey.net/08027/slidingPuzzleAcw/layouts/</string>
-    <string name="regexReplaceMisc">[^empty 1-9\\],]</string>
     <string name="puzzleImageURL">http://www.simongrey.net/08027/slidingPuzzleAcw/images/</string>
     <string name="puzzleLayout1">puzzleLayout1</string>
     <string name="puzzleLayout2">puzzleLayout2</string>
@@ -16,5 +15,14 @@
     <string name="win">Congratulations, you have won and scored</string>
     <string name="points">points</string>
     <string name="noNetwork">No Network Detected</string>
+    <string name="download_puzzles">Download Puzzles</string>
+    <string name="stored_puzzles">Stored Puzzles</string>
+    <string name="highscores">Highscores</string>
+    <string name="regexReplaceMisc">[^empty 1-9\\],]</string>
+    <string name="noHighscores">No Highscores, please complete a puzzle</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 
 </resources>

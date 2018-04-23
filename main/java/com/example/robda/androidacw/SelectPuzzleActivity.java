@@ -7,6 +7,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,12 +36,191 @@ public class SelectPuzzleActivity extends AppCompatActivity
 
     PuzzleDBHelper m_DBHelper = new PuzzleDBHelper(this);
     PuzzleDBHelper m_DBHelperRead = new PuzzleDBHelper(this);
-    Boolean downloadingInProgress = false;
+    Boolean downloadingInProgress = true;
     String layout = "";
     String picture = "";
     String[] formattedLayoutRow1 = null, formattedLayoutRow2 = null,
             formattedLayoutRow3 = null, formattedLayoutRow4 = null;
     String[] fullLayoutArray = null;
+    String puzzle;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_select_puzzle);
+
+        SQLiteDatabase db = new PuzzleDBHelper(this).getReadableDatabase();
+        String[] projection = {
+                PuzzleDBContract.PuzzleEntry._ID,
+                PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME,
+                PuzzleDBContract.PuzzleEntry.HIGHSCORE
+        };
+
+        Cursor c = db.query(
+                PuzzleDBContract.PuzzleEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        ArrayList puzzleList = new ArrayList<Puzzle>();
+        c.moveToFirst();
+
+        String name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+        int id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
+        puzzleList.add(new Puzzle(name, null, null, null, id));
+        while (c.moveToNext())
+        {
+            name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+            id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
+            puzzleList.add(new Puzzle(name, null, null, null, id));
+        }
+        c.close();
+
+        PuzzleAdapter adapter = new PuzzleAdapter(this, android.R.layout.simple_list_item_1, puzzleList);
+        final ListView puzzleListView = (ListView) findViewById(R.id.PirateListView);
+        puzzleListView.setAdapter(adapter);
+
+
+        puzzleListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
+            {
+
+                position++;
+                NetworkInfo info = (NetworkInfo) ((ConnectivityManager)
+                        getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+                if (info == null)
+                {
+                    Toast.makeText(SelectPuzzleActivity.this, "No Network Connection", Toast.LENGTH_SHORT).show();
+                    getStoredPuzzle(position);
+                }
+                else
+                {
+                    new downloadPuzzleDefinition().execute((getString(R.string.puzzleDefinitionURL)) + position + ".json");
+                }
+
+            }
+        });
+    }
+
+    protected void getStoredPuzzle(int position)
+    {
+        SQLiteDatabase dbRead = m_DBHelperRead.getReadableDatabase();
+
+        String[] projection = {
+                PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME,
+                PuzzleDBContract.PuzzleEntry.COLUMN_PICTURE_SET_DEFINITION,
+                PuzzleDBContract.PuzzleEntry.COLUMN_LAYOUT_DEFINITION
+        };
+        Cursor c = dbRead.query(
+                PuzzleDBContract.PuzzleEntry.TABLE_NAME,
+                projection,
+                null, null, null, null, null
+        );
+        c.moveToFirst();
+        do
+        {
+            String name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+            String layout = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_LAYOUT_DEFINITION));
+            String picture = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_PICTURE_SET_DEFINITION));
+            if (name.equals("puzzle" + position + ".json"))
+            {
+                Log.i("info", "Found");
+                String[] layoutProjection = {
+                        PuzzleDBContract.LayoutEntry.COLUMN_NAME_NAME,
+                        PuzzleDBContract.LayoutEntry.row1Col1,
+                        PuzzleDBContract.LayoutEntry.row1Col2,
+                        PuzzleDBContract.LayoutEntry.row1Col3,
+                        PuzzleDBContract.LayoutEntry.row1Col4,
+                        PuzzleDBContract.LayoutEntry.row2Col1,
+                        PuzzleDBContract.LayoutEntry.row2Col2,
+                        PuzzleDBContract.LayoutEntry.row2Col3,
+                        PuzzleDBContract.LayoutEntry.row2Col4,
+                        PuzzleDBContract.LayoutEntry.row3Col1,
+                        PuzzleDBContract.LayoutEntry.row3Col2,
+                        PuzzleDBContract.LayoutEntry.row3Col3,
+                        PuzzleDBContract.LayoutEntry.row3Col4,
+                        PuzzleDBContract.LayoutEntry.row4Col1,
+                        PuzzleDBContract.LayoutEntry.row4Col2,
+                        PuzzleDBContract.LayoutEntry.row4Col3,
+                        PuzzleDBContract.LayoutEntry.row4Col4,
+                };
+                Cursor d = dbRead.query(
+                        PuzzleDBContract.LayoutEntry.TABLE_NAME,
+                        layoutProjection,
+                        null, null, null, null, null
+                );
+
+                d.moveToFirst();
+                do
+                {
+                    String layoutName = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.COLUMN_NAME_NAME));
+                    if (layoutName.equals(layout))
+                    {
+                        String row1Col1 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row1Col1));
+                        String row1Col2 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row1Col2));
+                        String row1Col3 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row1Col3));
+                        String row1Col4 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row1Col4));
+
+                        String row2Col1 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row2Col1));
+                        String row2Col2 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row2Col2));
+                        String row2Col3 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row2Col3));
+                        String row2Col4 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row2Col4));
+
+                        String row3Col1 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row3Col1));
+                        String row3Col2 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row3Col2));
+                        String row3Col3 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row3Col3));
+                        String row3Col4 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row3Col4));
+
+                        String row4Col1 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row4Col1));
+                        String row4Col2 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row4Col2));
+                        String row4Col3 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row4Col3));
+                        String row4Col4 = d.getString(d.getColumnIndexOrThrow(PuzzleDBContract.LayoutEntry.row4Col4));
+
+                        Log.i("Info", "Found Layout");
+
+                        String[] puzzleLayout1 = {row1Col1, row1Col2, row1Col3, row1Col4};
+                        String[] puzzleLayout2 = {row2Col1, row2Col2, row2Col3, row2Col4};
+                        String[] puzzleLayout3 = {row3Col1, row3Col2, row3Col3, row3Col4};
+                        String[] puzzleLayout4 = {row4Col1, row4Col2, row4Col3, row4Col4};
+
+                        String[] fullLayout = {row1Col1, row1Col2, row1Col3, row1Col4,
+                                row2Col1, row2Col2, row2Col3, row2Col4,
+                                row3Col1, row3Col2, row3Col3, row3Col4,
+                                row4Col1, row4Col2, row4Col3, row4Col4};
+
+                        Log.i("infor", "" + puzzleLayout4.length);
+                        Intent intent = new Intent(getApplicationContext(), gameActivity.class);
+
+                        intent.putExtra((getString(R.string.puzzleLayout1)), puzzleLayout1);
+                        intent.putExtra((getString(R.string.puzzleLayout2)), puzzleLayout2);
+                        intent.putExtra((getString(R.string.puzzleLayout3)), puzzleLayout3);
+                        intent.putExtra((getString(R.string.puzzleLayout4)), puzzleLayout4);
+                        intent.putExtra((getString(R.string.fullPuzzleLayout)), fullLayout);
+                        intent.putExtra((getString(R.string.puzzleImage)), picture);
+                        intent.putExtra("puzzle", puzzle);
+                        startActivity(intent);
+                        break;
+                    }
+                } while (d.moveToNext());
+                d.close();
+            }
+        } while (c.moveToNext());
+        c.close();
+    }
+
+    public void show3x3(View view)
+    {
+
+    }
+
 
     private class downloadPuzzleDefinition extends AsyncTask<String, String, String>
     {
@@ -55,7 +237,7 @@ public class SelectPuzzleActivity extends AppCompatActivity
 
                 InputStream stream = (InputStream) new URL(args[0]).getContent();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                String puzzle = args[0].substring(args[0].lastIndexOf('/') + 1);
+                puzzle = args[0].substring(args[0].lastIndexOf('/') + 1);
 
                 String line = "";
                 String result = "";
@@ -285,7 +467,6 @@ public class SelectPuzzleActivity extends AppCompatActivity
                             e.printStackTrace();
                         }
                     }
-                    downloadingInProgress = false;
 
                 }
             } catch (Exception e)
@@ -295,84 +476,21 @@ public class SelectPuzzleActivity extends AppCompatActivity
             return layout;
         }
 
-
-            @Override
-            protected void onPostExecute (String s)
-            {
-            try
-            {
-                Log.i("Downloading", "Complete");
-                Intent intent = new Intent(getApplicationContext(), gameActivity.class);
-                intent.putExtra((getString(R.string.puzzleLayout1)), formattedLayoutRow1);
-                intent.putExtra((getString(R.string.puzzleLayout2)), formattedLayoutRow2);
-                intent.putExtra((getString(R.string.puzzleLayout3)), formattedLayoutRow3);
-                intent.putExtra((getString(R.string.puzzleLayout4)), formattedLayoutRow4);
-                intent.putExtra((getString(R.string.fullPuzzleLayout)), fullLayoutArray);
-                intent.putExtra((getString(R.string.puzzleImage)), picture);
-                startActivity(intent);
-            }catch(Exception e)
-                {
-                    e.printStackTrace();
-                }
-        }
-    }
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_select_puzzle);
-
-        SQLiteDatabase db = new PuzzleDBHelper(this).getReadableDatabase();
-        String[] projection = {
-                PuzzleDBContract.PuzzleEntry._ID,
-                PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME,
-                PuzzleDBContract.PuzzleEntry.HIGHSCORE
-        };
-
-        Cursor c = db.query(
-                PuzzleDBContract.PuzzleEntry.TABLE_NAME,
-                projection,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        ArrayList puzzleList = new ArrayList<Puzzle>();
-        c.moveToFirst();
-
-        String name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
-        String highScore = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.HIGHSCORE));
-        int id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
-        puzzleList.add(new Puzzle(name, null, null, highScore, id));
-        while (c.moveToNext())
+        @Override
+        protected void onPostExecute(String s)
         {
-            name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
-            highScore = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.HIGHSCORE));
-            id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
-            puzzleList.add(new Puzzle(name, null, null, highScore, id));
+            super.onPostExecute(s);
+            Log.i("Downloading", "Complete");
+            Intent intent = new Intent(getApplicationContext(), gameActivity.class);
+            intent.putExtra((getString(R.string.puzzleLayout1)), formattedLayoutRow1);
+            intent.putExtra((getString(R.string.puzzleLayout2)), formattedLayoutRow2);
+            intent.putExtra((getString(R.string.puzzleLayout3)), formattedLayoutRow3);
+            intent.putExtra((getString(R.string.puzzleLayout4)), formattedLayoutRow4);
+            intent.putExtra((getString(R.string.fullPuzzleLayout)), fullLayoutArray);
+            intent.putExtra((getString(R.string.puzzleImage)), picture);
+            intent.putExtra("puzzle", puzzle);
+            startActivity(intent);
         }
-        c.close();
-
-        PuzzleAdapter adapter = new PuzzleAdapter(this, android.R.layout.simple_list_item_1, puzzleList);
-        final ListView puzzleListView = (ListView) findViewById(R.id.PirateListView);
-        puzzleListView.setAdapter(adapter);
-
-
-        puzzleListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
-            {
-
-                position++;
-                new downloadPuzzleDefinition().execute((getString(R.string.puzzleDefinitionURL)) + position + ".json");
-            }
-        });
     }
 }
 

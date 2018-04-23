@@ -1,12 +1,16 @@
 package com.example.robda.androidacw;
 
+import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -16,10 +20,10 @@ public class Highscores extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_highscores);
-
         SQLiteDatabase db = new PuzzleDBHelper(this).getReadableDatabase();
         String[] projection = {
                 PuzzleDBContract.PuzzleEntry._ID,
+                PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME,
                 PuzzleDBContract.PuzzleEntry.HIGHSCORE
         };
 
@@ -33,35 +37,40 @@ public class Highscores extends AppCompatActivity {
                 null
         );
 
-        ArrayList puzzleList = new ArrayList<Puzzle>();
+        ArrayList puzzleList123 = new ArrayList<Puzzle>();
+
         c.moveToFirst();
 
         String name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+        int highScore = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.HIGHSCORE));
         int id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
-        puzzleList.add(new Puzzle(null, null, null, name, id));
+
+        String highScoreText = Integer.toString(highScore);
+        Puzzle puzzle = new Puzzle(name, null, null, highScoreText, id);
+
+        String formattedList = "Puzzle: " + puzzle.Name() + "\nScore: " + puzzle.Highscore();
+        puzzleList123.add(formattedList);
+
         while (c.moveToNext())
         {
             name = c.getString(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.COLUMN_NAME_NAME));
+            highScore = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry.HIGHSCORE));
             id = c.getInt(c.getColumnIndexOrThrow(PuzzleDBContract.PuzzleEntry._ID));
-            puzzleList.add(new Puzzle(null, null, null, name, id));
+            if(highScore == 0)
+            {
+                continue;
+            }
+            highScoreText = Integer.toString(highScore);
+            puzzle = new Puzzle(name, null, null, highScoreText, id);
+            formattedList = "Puzzle: " + puzzle.Name() + "\nScore: " + puzzle.Highscore();
+
+            puzzleList123.add(formattedList);
         }
         c.close();
+        PuzzleAdapter adapter = new PuzzleAdapter(this, android.R.layout.simple_list_item_1, puzzleList123);
+        final ListView listView = (ListView) findViewById(R.id.highscore);
+        listView.setAdapter(adapter);
 
-        PuzzleAdapter adapter = new PuzzleAdapter(this, android.R.layout.simple_list_item_1, puzzleList);
-        final ListView ListView = (ListView) findViewById(R.id.highscore);
-        ListView.setAdapter(adapter);
-
-
-        ListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
-            {
-
-                position++;
-                //new SelectPuzzleActivity.downloadPuzzleDefinition().execute((getString(R.string.puzzleDefinitionURL)) + position + ".json");
-            }
-        });
 
     }
 }

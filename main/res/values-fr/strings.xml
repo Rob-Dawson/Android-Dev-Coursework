@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jeu génial de glissière</string>
+    <string name="puzzleIndexURL">http://www.simongrey.net/08027/slidingPuzzleAcw/index.json</string>
+    <string name="downloadedPuzzles">Puzzles téléchargés</string>
+    <string name="noPuzzlesFound">Aucun puzzles trouvés, s\'il vous plaît télécharger des puzzles pour continuer</string>
+    <string name="puzzleLayout1">puzzleLayout1</string>
+    <string name="puzzleLayout2">puzzleLayout2</string>
+    <string name="puzzleLayout3">puzzleLayout3</string>
+    <string name="puzzleLayout4">puzzleLayout4</string>
+    <string name="fullPuzzleLayout">fullPuzzleLayout</string>
+    <string name="puzzleImage">puzzleImage</string>
+    <string name="puzzleDefinitionURL">http://www.simongrey.net/08027/slidingPuzzleAcw/puzzles/puzzle</string>
+    <string name="win">Félicitations, vous avez gagné et marqué</string>
+    <string name="points">points</string>
+    <string name="noNetwork">Aucun réseau détecté</string>
+    <string name="download_puzzles">Télécharger des puzzles</string>
+    <string name="stored_puzzles">Puzzles stockés</string>
+    <string name="highscores">Scores élevés</string>
+    <string name="regexReplaceMisc">[^empty 1-9\\],]</string>
+    <string name="puzzleImageURL">http://www.simongrey.net/08027/slidingPuzzleAcw/images/</string>
+    <string name="puzzleLayout">http://www.simongrey.net/08027/slidingPuzzleAcw/layouts/</string>
+</resources>
