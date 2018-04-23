@@ -27,23 +27,28 @@ public class Puzzle
         this.m_ID = pID;
     }
 
-//    public String Name()
-//    {
-//        return m_Name;
-//    }
-//
-//    public String PictureSet()
-//    {
-//        return m_PictureSet;
-//    }
-//
-//    public String LayoutDef()
-//    {
-//        return m_LayoutDef;
-//    }
-//
-//    public int ID()
-//    {
-//        return m_ID;
-//    }
+    public String Name()
+    {
+        return m_Name;
+    }
+
+    public String Highscore()
+    {
+        return m_HighScore;
+    }
+
+    public String PictureSet()
+    {
+        return m_PictureSet;
+    }
+
+    public String LayoutDef()
+    {
+        return m_LayoutDef;
+    }
+
+    public int ID()
+    {
+        return m_ID;
+    }
 }

@@ -1,7 +1,9 @@
 package com.example.robda.androidacw;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Chronometer;
@@ -17,6 +20,9 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class gameActivity extends AppCompatActivity
 {
@@ -57,13 +63,60 @@ public class gameActivity extends AppCompatActivity
     Chronometer simpleChronometer;
     GridAdapter adapter = new GridAdapter(gameActivity.this, tiles);
 
+    public static final String Shared_Pref = "timer";
+    public static final String currentTime = "currentTime";
 
+
+
+
+    private long resumeTime;
+    String puzzle1;
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+//        long timeWhenStopped = simpleChronometer.getBase() - SystemClock.elapsedRealtime();
+//        SharedPreferences preferences = getSharedPreferences(Shared_Pref, MODE_PRIVATE);
+//        SharedPreferences.Editor editor;
+//        editor = preferences.edit();
+//        editor.putLong(currentTime, timeWhenStopped);
+//        editor.apply();
+        simpleChronometer.stop();
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+//        SharedPreferences preferences = getSharedPreferences(Shared_Pref, MODE_PRIVATE);
+//        resumeTime = preferences.getLong(currentTime, 0);
+//        Toast.makeText(this, "" + resumeTime, Toast.LENGTH_SHORT).show();
+//        simpleChronometer.setBase(SystemClock.elapsedRealtime() + resumeTime);
+        simpleChronometer.start();
+    }
+
+//    @Override
+//    protected void onDestroy()
+//    {
+//        super.onDestroy();
+//        SharedPreferences preferences = getSharedPreferences(Shared_Pref, MODE_PRIVATE);
+//        SharedPreferences.Editor editor;
+//        editor = preferences.edit();
+//        editor.clear();
+//        editor.commit();
+//
+//
+//
+//        simpleChronometer.stop();
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+
         winner = (ImageView) findViewById(R.id.winner);
         winner.setVisibility(View.INVISIBLE);
         getStringIntent();
@@ -79,10 +132,10 @@ public class gameActivity extends AppCompatActivity
         {
             tiles = new Bitmap[puzzleRow1.length + puzzleRow2.length + puzzleRow3.length];
         }
-        
         drawGrid();
 
         simpleChronometer = findViewById(R.id.simpleChronometer); // initiate a chronometer
+        simpleChronometer.setBase(SystemClock.elapsedRealtime());
         simpleChronometer.start();
 
         adapter = new GridAdapter(gameActivity.this, tiles);
@@ -111,13 +164,60 @@ public class gameActivity extends AppCompatActivity
 
         fullLayout = intent.getStringArrayExtra((getString(R.string.fullPuzzleLayout)));
         puzzlePicture = intent.getStringExtra((getString(R.string.puzzleImage)));
+        puzzle1 = intent.getStringExtra("puzzle");
+
+        List<String> list = new ArrayList<String>();
+        List<String> list2 = new ArrayList<String>();
+        List<String> list3 = new ArrayList<String>();
+        List<String> list4 = new ArrayList<String>();
+        List<String> listFull = new ArrayList<String>();
+
+        for(String s : puzzleRow1) {
+            if(s != null && s.length() > 0) {
+                list.add(s);
+            }
+        }
+        puzzleRow1 = list.toArray(new String[list.size()]);
+
+        for(String s : puzzleRow2) {
+            if(s != null && s.length() > 0) {
+                list2.add(s);
+            }
+        }
+        puzzleRow2 = list2.toArray(new String[list2.size()]);
+
+        for(String s : puzzleRow3) {
+            if(s != null && s.length() > 0) {
+                list3.add(s);
+            }
+        }
+        puzzleRow3 = list3.toArray(new String[list3.size()]);
+        if(puzzleRow4 != null)
+        {
+            for (String s : puzzleRow4)
+            {
+                if (s != null && s.length() > 0)
+                {
+                    list4.add(s);
+                }
+            }
+            puzzleRow4 = list4.toArray(new String[list4.size()]);
+        }
+
+        for(String s : fullLayout) {
+            if(s != null && s.length() > 0) {
+                listFull.add(s);
+            }
+        }
+        fullLayout = listFull.toArray(new String[list.size()]);
+
     }
 
     protected void initaliseMultArray()
     {
         columns = puzzleRow1.length;
 
-        if (puzzleRow4 != null)
+        if (puzzleRow4 != null && puzzleRow4.length > 1)
         {
             rows = 4;
         }
@@ -170,11 +270,8 @@ public class gameActivity extends AppCompatActivity
         simpleChronometer.stop();
         long elapsedMillis = SystemClock.elapsedRealtime() - simpleChronometer.getBase();
         elapsedMillis = elapsedMillis / 1000;
-        if (playerScore != 0)
-        {
-            playerScore -= elapsedMillis;
-        }
-        else
+        playerScore -= elapsedMillis;
+        if (playerScore <= 0)
         {
             playerScore = 0;
         }
@@ -184,20 +281,9 @@ public class gameActivity extends AppCompatActivity
 
         SQLiteDatabase db = m_DBHelperRead.getWritableDatabase();
 
+        values.put(PuzzleDBContract.PuzzleEntry.HIGHSCORE, playerScore);
+        db.update(PuzzleDBContract.PuzzleEntry.TABLE_NAME, values, "Name=\"" + puzzle1 + "\"", null);
 
-//        String[] projection = {
-//                //PuzzleDBContract.PuzzleEntry.COLUMN_PICTURE_SET_DEFINITION,
-//                PuzzleDBContract.PuzzleEntry.HIGHSCORE
-//        };
-//        Cursor c = db.query(
-//                PuzzleDBContract.PuzzleEntry.TABLE_NAME,
-//                projection,
-//                null, null, null, null, null
-//        );
-//        c.close();
-        String highScore = Integer.toString(playerScore);
-        values.put(PuzzleDBContract.PuzzleEntry.HIGHSCORE, highScore);
-        db.insert(PuzzleDBContract.PuzzleEntry.TABLE_NAME, null, values);
         Log.i("Insert", "Highscore " + values);
     }
 
